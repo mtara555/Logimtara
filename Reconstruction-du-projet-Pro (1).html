@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LogiMtara Pro v4.2 - Tanger</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center">
+<div class="w-full max-w-md p-8 bg-slate-800 rounded-2xl shadow-2xl">
+  <h1 class="text-3xl font-bold text-center mb-2">LOGIMTARA</h1>
+  <p class="text-center text-slate-400 mb-6">Port Tanger Med - v4.2</p>
+  
+  <div id="login">
+    <input id="email" type="email" placeholder="chef@logimtara.ma" value="chef@logimtara.ma" class="w-full p-3 mb-3 bg-slate-700 rounded-lg">
+    <input id="password" type="password" placeholder="Mot de passe" value="Logi2026!" class="w-full p-3 mb-4 bg-slate-700 rounded-lg">
+    <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-bold">Se connecter</button>
+    <p id="error" class="text-red-400 mt-3 text-center hidden"></p>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl">Bienvenue <span id="nom"></span></h2>
+      <button onclick="logout()" class="text-sm text-slate-400">Déconnexion</button>
+    </div>
+    <div class="bg-slate-700 p-4 rounded-lg mb-4">
+      <p class="text-sm text-slate-300">API Status</p>
+      <p id="status" class="text-green-400 font-mono">Connecté</p>
+    </div>
+    <button onclick="loadReceptions()" class="w-full bg-emerald-600 p-2 rounded">Charger les réceptions</button>
+    <div id="data" class="mt-4 text-sm"></div>
+  </div>
+</div>
+
+<script>
+// REMPLACE par ton URL Codespaces (sans /api à la fin)
+const API_BASE = 'https://REPLACE-WITH-YOUR-4000-URL.app.github.dev/api';
+
+async function login() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email, password})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    showApp(data.user);
+  } catch(e) {
+    document.getElementById('error').textContent = e.message;
+    document.getElementById('error').classList.remove('hidden');
+  }
+}
+
+function showApp(user) {
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('nom').textContent = user.nom;
+}
+
+async function loadReceptions() {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API_BASE}/receptions`, {
+    headers: {'Authorization': `Bearer ${token}`}
+  });
+  const data = await res.json();
+  document.getElementById('data').innerHTML = `<pre class="bg-slate-900 p-2 rounded overflow-auto max-h-60">${JSON.stringify(data, null, 2)}</pre>`;
+}
+
+function logout() {
+  localStorage.clear();
+  location.reload();
+}
+
+// Auto-login si token présent
+const token = localStorage.getItem('token');
+if (token) {
+  const user = JSON.parse(localStorage.getItem('user'));
+  showApp(user);
+}
+</script>
+</body>
+</html>
